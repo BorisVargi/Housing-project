@@ -1,0 +1,116 @@
+const { Advertisement, Favourite } = require('../../db/models');
+const advertismentRouter = require('express').Router();
+const checkBody = require('../middlewares/checkBody')
+const checkId = require('../middlewares/checkId')
+const catchError = require('../../utils/catchError')
+
+advertismentRouter
+.route('/')
+.get(async (req, res) => {
+  try {
+    const allAdvertis = await Advertisement.findAll();
+    res.json(allAdvertis);
+  } catch (error) {
+    console.log(error);
+    res
+      .status(500)
+      .json({ message: error.message, text: 'Ошибка получения всех объявлений' });
+  }
+})
+.post(checkBody, checkId, async (req, res) => {
+  try {
+    const { typesId, price, photo, phone, description, coordinatesX, coordinatesY } =
+      req.body;
+    const newAdvertis = await Advertisement.create({
+      typesId,
+      price,
+      photo,
+      phone,
+      description,
+      coordinatesX,
+      coordinatesY,
+    });
+    res.status(201).json(newAdvertis);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: error.message, text: 'Ошибка создания объявления' });
+  }
+});
+
+advertismentRouter
+.route('/:id')
+.get(checkId, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const oneAdvertis = await Advertisement.findByPk(id);
+    if (!oneAdvertis) {
+      return res.status(404).json({ message: 'Объявление не найдено' });
+    }
+    res.json(oneAdvertis);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: error.message, text: 'Ошибка получения объявления' });
+  }
+})
+.delete(checkId, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedAdvertis = await Advertisement.destroy({
+      where: { id },
+    });
+    if (!deletedAdvertis) {
+      return res.status(404).json({ message: 'Объявление не найдено' });
+    }
+    res.status(204).end();
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: error.message, text: 'Ошибка удаления объявления' });
+  }
+})
+.patch(checkBody, checkId, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { typesId, price, photo, phone, description, coordinatesX, coordinatesY } =
+      req.body;
+    const [updated] = await Advertisement.update(
+      { typesId, price, photo, phone, description, coordinatesX, coordinatesY },
+      { where: { id } },
+    );
+    if (!updated) {
+      return res.status(404).json({ message: 'Объявление не найдено' });
+    }
+    const updatedAdvertis = await Advertisement.findByPk(id);
+    res.json(updatedAdvertis);
+  } catch (error) {
+    console.log(error);
+    res
+      .status(500)
+      .json({ message: error.message, text: 'Ошибка обновления объявления' });
+  }
+});
+
+
+
+advertismentRouter.route('/favorites/:userId').get(async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const favorites = await Favorite.findAll({
+      where: { userId },
+      include: {
+        model: Advertisement,
+        attributes: ['id', 'typesId', 'price', 'photo', 'description'],
+      },
+    });
+    const favAdvertis = favorites.map((favorite) => favorite.Advertisement);
+
+    res.json(favAdvertis);
+  } catch (error) {
+    console.log(error);
+    res
+      .status(500)
+      .json({ message: error.message, text: 'Ошибка получения избранных объявлений' });
+  }
+});
+
+module.exports = advertismentRouter
