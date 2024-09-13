@@ -1,5 +1,5 @@
-const  verifyAccessToken = require("../middlewares/verifyAccessToken");
-const {User} = require('../../db/models')
+const verifyAccessToken = require('../middlewares/verifyAccessToken');
+const { User } = require('../../db/models');
 
 myFavouritesRouter.get('/favourites', verifyAccessToken, async (req, res) => {
   const posts = await PPPPPPP.findAll({
@@ -9,4 +9,4 @@ myFavouritesRouter.get('/favourites', verifyAccessToken, async (req, res) => {
   res.json(posts);
 });
 
-// module.exports = verifyAccessToken
+// module.exports = myFavouritesRouter
